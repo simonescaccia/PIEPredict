@@ -23,6 +23,8 @@ import os
 import pickle
 import time
 
+import yaml
+
 from keras import backend as K
 from keras import regularizers
 from keras.applications import vgg16
@@ -35,14 +37,16 @@ from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers import Input
 from keras.layers import RepeatVector
-from keras.layers.recurrent import LSTM
+from keras.layers import LSTM
 from keras.models import Model
 from keras.models import load_model
 from keras.optimizers import RMSprop
-from keras.preprocessing.image import img_to_array
-from keras.preprocessing.image import load_img
+from keras.utils import img_to_array
+from keras.utils import load_img
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
+
+from pathlib import PurePath
 
 from utils import *
 
@@ -50,8 +54,10 @@ from utils import *
 #from utilities.jaad_utilities import *
 #from utilities.train_utilities import *
 
-K.set_image_dim_ordering('tf')
+K.set_image_data_format('channels_last')
 
+with open('config.yml', 'r') as file:
+    config_file = yaml.safe_load(file)
 
 class PIEIntent(object):
     """
@@ -124,7 +130,7 @@ class PIEIntent(object):
                  file_name='',
                  data_subset='',
                  data_type='',
-                 save_root_folder=os.environ['PIE_PATH'] + '/data/'):
+                 save_root_folder=config_file['PIE_PATH'] + '/data/'):
         """
         A path generator method for saving model and config data. Creates directories
         as needed.
@@ -238,9 +244,9 @@ class PIEIntent(object):
             update_progress(i / len(img_sequences))
             img_seq = []
             for imp, b, p in zip(seq, bbox_sequences[i], pid):
-                set_id = imp.split('/')[-3]
-                vid_id = imp.split('/')[-2]
-                img_name = imp.split('/')[-1].split('.')[0]
+                set_id = PurePath(imp).parts[-3]
+                vid_id = PurePath(imp).parts[-2]
+                img_name = PurePath(imp).parts[-1].split('.')[0]
                 img_save_folder = os.path.join(save_path, set_id, vid_id)
                 img_save_path = os.path.join(img_save_folder, img_name+'_'+p[0]+'.pkl')
                 

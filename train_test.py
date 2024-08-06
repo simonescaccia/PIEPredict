@@ -21,6 +21,8 @@ limitations under the License.
 import os
 import sys
 
+import yaml
+
 from pie_intent import PIEIntent
 from pie_predict import PIEPredict
 
@@ -31,8 +33,10 @@ import tensorflow as tf
 
 from prettytable import PrettyTable
 
-dim_ordering = K.image_dim_ordering()
+dim_ordering = K.image_data_format()
 
+with open('config.yml', 'r') as file:
+    config_file = yaml.safe_load(file)
 
 def train_predict(dataset='pie',
                   train_test=2, 
@@ -50,7 +54,7 @@ def train_predict(dataset='pie',
                  'kfold_params': {'num_folds': 5, 'fold': 1}}
 
     t = PIEPredict()
-    pie_path = os.environ.copy()['PIE_PATH']
+    pie_path = config_file['PIE_PATH']
 
     if dataset == 'pie':
         imdb = PIE(data_path=pie_path)
@@ -129,7 +133,7 @@ def train_intent(train_test=1):
 
     saved_files_path = ''
 
-    imdb = PIE(data_path=os.environ.copy()['PIE_PATH'])
+    imdb = PIE(data_path=config_file['PIE_PATH'])
 
     pretrained_model_path = 'data/pie/intention/context_loc_pretrained'
 

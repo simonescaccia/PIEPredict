@@ -19,7 +19,7 @@ limitations under the License.
 """
 import sys
 import PIL
-from keras.preprocessing.image import img_to_array, load_img
+from keras.utils import img_to_array, load_img
 
 
 def update_progress(progress):
