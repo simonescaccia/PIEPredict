@@ -30,15 +30,23 @@ the following external libraries:<br/>
 
 To install via virtual environment (recommended) follow these steps:
 
-- Install virtual environment `sudo apt-get install virtualenv`.
+- Linux:
 
-- Create a virtual environment with Python3:
+    - Install virtual environment `sudo apt-get install virtualenv`.
 
-```
-> virtualenv --system-site-packages -p python3 ./venv
-> source venv/bin/activate
-```
-- Install dependencies:
+    - Create a virtual environment with Python3:
+
+      ```
+      > virtualenv --system-site-packages -p python3 ./venv
+      > source venv/bin/activate
+      ```
+
+- Windows:
+  
+      python -m venv --system-site-packages ./venv
+
+
+Install dependencies:
 `pip3 install -r requirements.txt`
 
 
