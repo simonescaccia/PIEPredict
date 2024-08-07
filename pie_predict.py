@@ -228,7 +228,7 @@ class PIEPredict(object):
                  save_root_folder='data/'):
         """
         A path generator method for saving model and config data. It create directories if needed.
-        :param file_name: The actual save file name , e.g. 'model.h5'
+        :param file_name: The actual save file name , e.g. 'model.h5.keras'
         :param save_folder: The name of folder containing the saved files
         :param dataset: The name of the dataset used
         :param save_root_folder: The root folder
@@ -298,7 +298,7 @@ class PIEPredict(object):
         :param model_opts: Data generation parameters (see get_data)
         :return: The path to where the final model is saved
         """
-        optimizer = RMSprop(lr=lr)
+        optimizer = RMSprop(learning_rate=lr)
 
         train_data = self.get_data(data_train, **model_opts)
         val_data = self.get_data(data_val, **model_opts)
@@ -326,7 +326,7 @@ class PIEPredict(object):
 
         model_path, _ = self.get_path(save_folder=model_folder_name,
                                       model_type=model_type,
-                                      file_name='model.h5')
+                                      file_name='model.h5.keras')
 
         # Save data parameters
         opts_path, _ = self.get_path(save_folder=model_folder_name,
@@ -402,7 +402,7 @@ class PIEPredict(object):
         :param model_path: The path to where the model to be tested is saved
         :return: Mean squared error (MSE) of the prediction
         """
-        test_model = load_model(os.path.join(model_path, 'model.h5'))
+        test_model = load_model(os.path.join(model_path, 'model.h5.keras'))
         test_model.summary()
 
         with open(os.path.join(model_path, 'model_opts.pkl'), 'rb') as fid:
@@ -543,10 +543,10 @@ class PIEPredict(object):
                 int_data[i] = np.array([[0.5]] * box_data['pred_target'].shape[1])
 
         #speed_path = '/home/aras/PycharmProjects/release_code/test/speed_models/pie_speed'
-        speed_model = load_model(os.path.join(speed_model_path, 'model.h5'))
+        speed_model = load_model(os.path.join(speed_model_path, 'model.h5.keras'))
 
         #bis_path = '/home/aras/PycharmProjects/release_code/test/box_intent_speed'
-        box_intent_speed_model = load_model(os.path.join(traj_model_path, 'model.h5'))
+        box_intent_speed_model = load_model(os.path.join(traj_model_path, 'model.h5.keras'))
 
         ################## run speed model ####################
         model_opts['enc_input_type'] = ['obd_speed']

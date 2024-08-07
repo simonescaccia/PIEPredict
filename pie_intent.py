@@ -570,7 +570,7 @@ class PIEIntent(object):
         train_data = ([train_img, train_d['decoder_input']], train_d['output'])
         val_data = ([val_img, val_d['decoder_input']], val_d['output'])
 
-        optimizer = RMSprop(lr=optimizer_params['lr'],
+        optimizer = RMSprop(learning_rate=optimizer_params['lr'],
                             decay=optimizer_params['decay'],
                             clipvalue=optimizer_params['clipvalue'])
 
@@ -583,7 +583,7 @@ class PIEIntent(object):
         model_path, _ = self.get_path(type_save='models',
                                       model_name='convlstm_encdec',
                                       models_save_folder=model_folder_name,
-                                      file_name='model.h5',
+                                      file_name='model.h5.keras',
                                       save_root_folder='data')
         config_path, _ = self.get_path(type_save='models',
                                        model_name='convlstm_encdec',
@@ -665,11 +665,11 @@ class PIEIntent(object):
                                              include_top=False,
                                              weights='imagenet')
             try:
-                test_model = load_model(os.path.join(model_path, 'model.h5'))
+                test_model = load_model(os.path.join(model_path, 'model.h5.keras'))
 
             except:
                 test_model = self.get_model(train_params['model'])
-                test_model.load_weights(os.path.join(model_path, 'model.h5'))
+                test_model.load_weights(os.path.join(model_path, 'model.h5.keras'))
             
             test_model.summary()
 

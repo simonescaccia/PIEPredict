@@ -146,7 +146,7 @@ def train_intent(train_test=1):
 
         saved_files_path = t.train(data_train=beh_seq_train,
                                    data_val=beh_seq_val,
-                                   epochs=400,
+                                   epochs=10, # TODO: set to 400
                                    loss=['binary_crossentropy'],
                                    metrics=['accuracy'],
                                    batch_size=128,
@@ -168,13 +168,13 @@ def train_intent(train_test=1):
         print(t)
 
         K.clear_session()
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         return saved_files_path
 
 def main(dataset='pie', train_test=2):
 
       intent_model_path = train_intent(train_test=train_test)
-      train_predict(dataset=dataset, train_test=train_test, intent_model_path=intent_model_path)
+      # train_predict(dataset=dataset, train_test=train_test, intent_model_path=intent_model_path) # no speed and trajectory
 
 
 if __name__ == '__main__':
