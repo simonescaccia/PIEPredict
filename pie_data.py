@@ -102,15 +102,11 @@ class PIE(object):
         :param image_set: Image set split
         :return: Set ids of the image set
         """
-        image_set_nums = {'train': ['set02'],
-                          'val': ['set05'],
-                          'test': ['set05'],
-                          'all': ['set02','set05']}
-        # image_set_nums = {'train': ['set01', 'set02', 'set04'], TODO: restore original split
-        #                   'val': ['set05', 'set06'],
-        #                   'test': ['set03'],
-        #                   'all': ['set01', 'set02', 'set03',
-        #                           'set04', 'set05', 'set06']}
+        image_set_nums = {'train': ['set01', 'set02', 'set04'],
+                          'val': ['set05', 'set06'],
+                          'test': ['set03'],
+                          'all': ['set01', 'set02', 'set03',
+                                  'set04', 'set05', 'set06']}
         return image_set_nums[image_set]
 
     def _get_image_path(self, sid, vid, fid):
