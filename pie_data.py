@@ -47,6 +47,8 @@ import pandas as pd
 
 from utils import img_pad, jitter_bbox, squarify, update_progress
 
+from PIL import Image
+
 class PIE(object):
     def __init__(self, regen_database=False, data_path=''):
         """
@@ -407,7 +409,7 @@ class PIE(object):
  
         # Remove duplicates
         df = df.drop_duplicates()
-
+        print('')
         return df
     
     def _extract_and_save(self, img_path, b, ped_id, set_id, vid_id, img_name, image, save_path):
@@ -423,7 +425,6 @@ class PIE(object):
         :param image: The image
         :param save_path: The path to save the features
         """
-        print('type(image) ', type(image))
         img_save_folder = os.path.join(save_path, set_id, vid_id)
         img_save_path = os.path.join(img_save_folder, img_name+'_'+ped_id+'.pkl')
         if not os.path.exists(img_save_path):
@@ -508,10 +509,11 @@ class PIE(object):
                     if frame_num in frames_list:
                         self.update_progress(img_count / num_frames)
                         img_count += 1
+                        # CV image to PIL image
+                        image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+                        image = Image.fromarray(image)
                         # Retrieve the image path, bbox, ped_id from the annotation dataframe
-                        print('set_id == "{}" and vid_id == "{}" and image_name == "{}"'.format(set_id, vid, '{:05d}'.format(frame_num)))
                         df = annotation_dataframe.query('set_id == "{}" and vid_id == "{}" and image_name == "{}"'.format(set_id, vid, '{:05d}'.format(frame_num)))
-                        print(df)
                         # Apply the function extract_features to each row of the dataframe
                         df.apply(
                             lambda row, image=image, set_id=set_id, vid=vid, frame_num=frame_num: 
