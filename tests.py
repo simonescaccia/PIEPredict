@@ -17,4 +17,5 @@ with open('config.yml', 'r') as file:
     config_file = yaml.safe_load(file)
 
 imdb = PIE(data_path=config_file['PIE_PATH'])
-imdb.extract_images_and_save_features()
+#imdb.extract_images_and_save_features()
+imdb.organize_features()

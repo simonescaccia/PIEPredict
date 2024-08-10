@@ -49,6 +49,8 @@ from utils import img_pad, jitter_bbox, squarify, update_progress
 
 from PIL import Image
 
+import shutil
+
 class PIE(object):
     def __init__(self, regen_database=False, data_path=''):
         """
@@ -544,13 +546,25 @@ class PIE(object):
                                     data_subset = 'all')
         folders = ['train', 'val', 'test']
         for folder in folders:
-            path = self.get_path(type_save='data',
+            dest_path = self.get_path(type_save='data',
                                 data_type='features'+'_'+self.data_opts['crop_type']+'_'+self.data_opts['crop_mode'], # images    
                                 model_name='vgg16_'+'none',
                                 data_subset = folder)
             sets = self._get_image_set_ids(folder)
-
-
+            for set_id in sets:
+                # Move the folder set_id from source_path to path
+                source_set_path = os.path.join(source_path, set_id)
+                # Check if the folder exists
+                if not os.path.exists(source_set_path):
+                    continue
+                dest_set_path = os.path.join(dest_path, set_id)
+                file_names = os.listdir(source_set_path)
+                for file_name in file_names:
+                    # Check if the file exists
+                    if not os.path.exists(os.path.join(dest_set_path, file_name)):
+                        shutil.move(os.path.join(source_set_path, file_name), dest_set_path)
+                       
+            
 
     # Annotation processing helpers
     def _map_text_to_scalar(self, label_type, value):
