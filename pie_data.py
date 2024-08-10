@@ -77,6 +77,24 @@ class PIE(object):
         self.context_model = vgg16.VGG16(input_shape=(224, 224, 3),
                                          include_top=False,
                                          weights='imagenet')
+        
+        self.data_opts = {'fstride': 1,
+            'sample_type': 'all', 
+            'height_rng': [0, float('inf')],
+            'squarify_ratio': 0,
+            'data_split_type': 'default',  #  kfold, random, default
+            'seq_type': 'intention', #  crossing , intention
+            'min_track_size': 0, #  discard tracks that are shorter
+            'max_size_observe': 15,  # number of observation frames
+            'max_size_predict': 5,  # number of prediction frames
+            'seq_overlap_rate': 0.5,  # how much consecutive sequences overlap
+            'balance': True,  # balance the training and testing samples
+            'crop_type': 'context',  # crop 2x size of bbox around the pedestrian
+            'crop_mode': 'pad_resize',  # pad with 0s and resize to VGG input
+            'encoder_input_type': [],
+            'decoder_input_type': ['bbox'],
+            'output_type': ['intention_binary']
+            }
 
     # Path generators
     @property
@@ -297,7 +315,7 @@ class PIE(object):
         :return: The full path for the save folder
         """
         if save_root_folder == '':
-            save_root_folder = self._pie_path + '/data/'
+            save_root_folder = os.path.join(self._pie_path, 'data')
 
         assert(type_save in ['models', 'data'])
         if data_type != '':
@@ -447,35 +465,17 @@ class PIE(object):
                              Note: extracting 'all' features requires approx. TODO
         """
         # Get annotations
-        data_opts = {'fstride': 1,
-            'sample_type': 'all', 
-            'height_rng': [0, float('inf')],
-            'squarify_ratio': 0,
-            'data_split_type': 'default',  #  kfold, random, default
-            'seq_type': 'intention', #  crossing , intention
-            'min_track_size': 0, #  discard tracks that are shorter
-            'max_size_observe': 15,  # number of observation frames
-            'max_size_predict': 5,  # number of prediction frames
-            'seq_overlap_rate': 0.5,  # how much consecutive sequences overlap
-            'balance': True,  # balance the training and testing samples
-            'crop_type': 'context',  # crop 2x size of bbox around the pedestrian
-            'crop_mode': 'pad_resize',  # pad with 0s and resize to VGG input
-            'encoder_input_type': [],
-            'decoder_input_type': ['bbox'],
-            'output_type': ['intention_binary']
-            }
-        
-        data_type = {'encoder_input_type': data_opts['encoder_input_type'],
-                     'decoder_input_type': data_opts['decoder_input_type'],
-                     'output_type': data_opts['output_type']}
-        seq_length = data_opts['max_size_observe']
+        data_type = {'encoder_input_type': self.data_opts['encoder_input_type'],
+                     'decoder_input_type': self.data_opts['decoder_input_type'],
+                     'output_type': self.data_opts['output_type']}
+        seq_length = self.data_opts['max_size_observe']
         
 
         annot_database = self.generate_database()
-        sequence_data = self._get_intention('all', annot_database, **data_opts)
-        _, images, bboxes, ped_ids = self.get_tracks(sequence_data, data_type, seq_length, data_opts['seq_overlap_rate'])
+        sequence_data = self._get_intention('all', annot_database, **self.data_opts)
+        _, images, bboxes, ped_ids = self.get_tracks(sequence_data, data_type, seq_length, self.data_opts['seq_overlap_rate'])
         save_path=self.get_path(type_save='data',
-                                data_type='features'+'_'+data_opts['crop_type']+'_'+data_opts['crop_mode'], # images    
+                                data_type='features'+'_'+self.data_opts['crop_type']+'_'+self.data_opts['crop_mode'], # images    
                                 model_name='vgg16_'+'none',
                                 data_subset = 'all')
 
@@ -530,6 +530,26 @@ class PIE(object):
                 if num_frames != img_count:
                     print('num images don\'t match {}/{}'.format(num_frames, img_count))
                 print('\n')
+
+    def organize_features(self):
+        """
+        @author: Simone Scaccia
+        Organizes the features in the default folders
+        """
+        print('---------------------------------------------------------') 
+        print("Moving features to the default folder")
+        source_path = self.get_path(type_save='data',
+                                    data_type='features'+'_'+self.data_opts['crop_type']+'_'+self.data_opts['crop_mode'], # images    
+                                    model_name='vgg16_'+'none',
+                                    data_subset = 'all')
+        folders = ['train', 'val', 'test']
+        for folder in folders:
+            path = self.get_path(type_save='data',
+                                data_type='features'+'_'+self.data_opts['crop_type']+'_'+self.data_opts['crop_mode'], # images    
+                                model_name='vgg16_'+'none',
+                                data_subset = folder)
+            sets = self._get_image_set_ids(folder)
+
 
 
     # Annotation processing helpers
