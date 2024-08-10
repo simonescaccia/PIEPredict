@@ -27,6 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
+from pathlib import PurePath
 import pickle
 import cv2
 import sys
@@ -38,6 +39,13 @@ from os.path import join, abspath, isfile, isdir
 from os import makedirs, listdir
 from sklearn.model_selection import train_test_split, KFold
 
+from keras.applications import vgg16
+from keras.utils import img_to_array
+import os
+
+import pandas as pd
+
+from utils import img_pad, jitter_bbox, squarify, update_progress
 
 class PIE(object):
     def __init__(self, regen_database=False, data_path=''):
@@ -62,6 +70,11 @@ class PIE(object):
 
         self._clips_path = join(self._pie_path, 'PIE_clips')
         self._images_path = join(self._pie_path, 'images')
+
+        # Create context model
+        self.context_model = vgg16.VGG16(input_shape=(224, 224, 3),
+                                         include_top=False,
+                                         weights='imagenet')
 
     # Path generators
     @property
@@ -91,7 +104,7 @@ class PIE(object):
                           'val': ['set05'],
                           'test': ['set05'],
                           'all': ['set02','set05']}
-        # image_set_nums = {'train': ['set01', 'set02', 'set04'],
+        # image_set_nums = {'train': ['set01', 'set02', 'set04'], TODO: restore original split
         #                   'val': ['set05', 'set06'],
         #                   'test': ['set03'],
         #                   'all': ['set01', 'set02', 'set03',
@@ -264,6 +277,262 @@ class PIE(object):
                 if num_frames != img_count:
                     print('num images don\'t match {}/{}'.format(num_frames, img_count))
                 print('\n')
+
+    def get_path(self,
+                 type_save='models', # model or data
+                 models_save_folder='',
+                 model_name='convlstm_encdec',
+                 file_name='',
+                 data_subset='',
+                 data_type='',
+                 save_root_folder=''):
+        """
+        A path generator method for saving model and config data. Creates directories
+        as needed.
+        :param type_save: Specifies whether data or model is saved.
+        :param models_save_folder: model name (e.g. train function uses timestring "%d%b%Y-%Hh%Mm%Ss")
+        :param model_name: model name (either trained convlstm_encdec model or vgg16)
+        :param file_name: Actual file of the file (e.g. model.h5, history.h5, config.pkl)
+        :param data_subset: train, test or val
+        :param data_type: type of the data (e.g. features_context_pad_resize)
+        :param save_root_folder: The root folder for saved data.
+        :return: The full path for the save folder
+        """
+        if save_root_folder == '':
+            save_root_folder = self._pie_path + '/data/'
+
+        assert(type_save in ['models', 'data'])
+        if data_type != '':
+            assert(any([d in data_type for d in ['images', 'features']]))
+        root = os.path.join(save_root_folder, type_save)
+
+        if type_save == 'models':
+            save_path = os.path.join(save_root_folder, 'pie', 'intention', models_save_folder)
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+            return os.path.join(save_path, file_name), save_path
+        else:
+            save_path = os.path.join(root, 'pie', data_subset, data_type, model_name)
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+            return save_path
+
+    def get_tracks(self, dataset, data_type, seq_length, overlap):
+        """
+        Generate tracks by sampling from pedestrian sequences
+        :param dataset: raw data from the dataset
+        :param data_type: types of data for encoder/decoder input
+        :param seq_length: the length of the sequence
+        :param overlap: defines the overlap between consecutive sequences (between 0 and 1)
+        :return: a dictionary containing sampled tracks for each data modality
+        """
+        overlap_stride = seq_length if overlap == 0 else \
+        int((1 - overlap) * seq_length)
+
+        overlap_stride = 1 if overlap_stride < 1 else overlap_stride
+
+        d_types = []
+        for k in data_type.keys():
+            d_types.extend(data_type[k])
+        d = {}
+
+        if 'bbox' in d_types:
+            d['bbox'] = dataset['bbox']
+        if 'intention_binary' in d_types:
+            d['intention_binary'] = dataset['intention_binary']
+        if 'intention_prob' in d_types:
+            d['intention_prob'] = dataset['intention_prob']
+
+        bboxes = dataset['bbox'].copy()
+        images = dataset['image'].copy()
+        ped_ids = dataset['ped_id'].copy()
+
+        for k in d.keys():
+            tracks = []
+            for track in d[k]:
+                tracks.extend([track[i:i+seq_length] for i in\
+                            range(0,len(track)\
+                            - seq_length + 1, overlap_stride)])
+            d[k] = tracks
+
+        pid = []
+        for p in ped_ids:
+            pid.extend([p[i:i+seq_length] for i in\
+                        range(0,len(p)\
+                        - seq_length + 1, overlap_stride)])
+        ped_ids = pid
+
+        im = []
+        for img in images:
+            im.extend([img[i:i+seq_length] for i in\
+                        range(0,len(img)\
+                        - seq_length + 1, overlap_stride)])
+        images = im
+
+        bb = []
+        for bbox in bboxes:
+            bb.extend([bbox[i:i+seq_length] for i in\
+                        range(0,len(bbox)\
+                        - seq_length + 1, overlap_stride)])
+
+        bboxes = bb
+        return d, images, bboxes, ped_ids
+
+    def _get_image_annotations(self, images, bboxes, ped_ids):
+        """
+        @author: Simone Scaccia
+        Collects annotations for each image
+        :param images: List of image paths
+        :param bboxes: List of bounding boxes
+        :param ped_ids: List of pedestrian ids
+        :return: A dataframe containing annotations for each image
+        """
+
+        print('---------------------------------------------------------')
+        print("Preparing annotations for the images")
+
+        # Store the annotations in a dataframe wit the following columns: set_id, vid_id, image_name, img_path, bbox, ped_id
+        df = pd.DataFrame(columns=['set_id', 'vid_id', 'image_name', 'img_path', 'bbox', 'ped_id'])
+        i = -1
+        for seq, pid in zip(images, ped_ids):
+            i += 1
+            update_progress(i / len(images))
+            for imp, b, p in zip(seq, bboxes[i], pid):
+                set_id = PurePath(imp).parts[-3]
+                vid_id = PurePath(imp).parts[-2]
+                img_name = PurePath(imp).parts[-1].split('.')[0]
+                # Print the img_path, bbox, ped_id types
+                # Add the image to the dataframe using concat method
+                df = pd.concat([df, pd.DataFrame({'set_id': [set_id], 'vid_id': [vid_id], 'image_name': [img_name], 'img_path': [imp], 'bbox': [tuple(b)], 'ped_id': [p[0]]})])
+ 
+        # Remove duplicates
+        df = df.drop_duplicates()
+
+        return df
+    
+    def _extract_and_save(self, img_path, b, ped_id, set_id, vid_id, img_name, image, save_path):
+        """
+        @author: Simone Scaccia
+        Extracts features from images and saves them on hard drive
+        :param img_path: The path to the image
+        :param b: The bounding box of the pedestrian
+        :param ped_id: The pedestrian id
+        :param set_id: The set id
+        :param vid_id: The video id
+        :param img_name: The image name
+        :param image: The image
+        :param save_path: The path to save the features
+        """
+        print('type(image) ', type(image))
+        img_save_folder = os.path.join(save_path, set_id, vid_id)
+        img_save_path = os.path.join(img_save_folder, img_name+'_'+ped_id+'.pkl')
+        if not os.path.exists(img_save_path):
+            bbox = jitter_bbox(img_path, [b],'enlarge', 2)[0]
+            bbox = squarify(bbox, 1, image.size[0])
+            bbox = list(map(int,bbox[0:4]))
+            cropped_image = image.crop(bbox)
+            img_data = img_pad(cropped_image, mode='pad_resize', size=224)                        
+            image_array = img_to_array(img_data)
+            preprocessed_img = vgg16.preprocess_input(image_array)
+            expanded_img = np.expand_dims(preprocessed_img, axis=0)
+            img_features = self.context_model.predict(expanded_img)
+            if not os.path.exists(img_save_folder):
+                os.makedirs(img_save_folder)
+            with open(img_save_path, 'wb') as fid:
+                pickle.dump(img_features, fid, pickle.HIGHEST_PROTOCOL)
+        
+
+    def extract_images_and_save_features(self):
+        """
+        @author: Simone Scaccia
+        Extracts annotated images from clips, compute features and saves on hard drive
+        :param extract_frame_type: Whether to extract 'all' frames or only the ones that are 'annotated'
+                             Note: extracting 'all' features requires approx. TODO
+        """
+        # Get annotations
+        data_opts = {'fstride': 1,
+            'sample_type': 'all', 
+            'height_rng': [0, float('inf')],
+            'squarify_ratio': 0,
+            'data_split_type': 'default',  #  kfold, random, default
+            'seq_type': 'intention', #  crossing , intention
+            'min_track_size': 0, #  discard tracks that are shorter
+            'max_size_observe': 15,  # number of observation frames
+            'max_size_predict': 5,  # number of prediction frames
+            'seq_overlap_rate': 0.5,  # how much consecutive sequences overlap
+            'balance': True,  # balance the training and testing samples
+            'crop_type': 'context',  # crop 2x size of bbox around the pedestrian
+            'crop_mode': 'pad_resize',  # pad with 0s and resize to VGG input
+            'encoder_input_type': [],
+            'decoder_input_type': ['bbox'],
+            'output_type': ['intention_binary']
+            }
+        
+        data_type = {'encoder_input_type': data_opts['encoder_input_type'],
+                     'decoder_input_type': data_opts['decoder_input_type'],
+                     'output_type': data_opts['output_type']}
+        seq_length = data_opts['max_size_observe']
+        
+
+        annot_database = self.generate_database()
+        sequence_data = self._get_intention('all', annot_database, **data_opts)
+        _, images, bboxes, ped_ids = self.get_tracks(sequence_data, data_type, seq_length, data_opts['seq_overlap_rate'])
+        save_path=self.get_path(type_save='data',
+                                data_type='features'+'_'+data_opts['crop_type']+'_'+data_opts['crop_mode'], # images    
+                                model_name='vgg16_'+'none',
+                                data_subset = 'all')
+
+        annotation_dataframe = self._get_image_annotations(images, bboxes, ped_ids)
+        
+        print('---------------------------------------------------------')
+        print("Extracting features and saving on hard drive")
+
+        # Extract images and features
+        set_folders = [f for f in sorted(listdir(self._clips_path))]
+        for set_id in set_folders:
+            print('Extracting frames from', set_id)
+            set_folder_path = join(self._clips_path, set_id)
+            extract_frames = self.get_annotated_frame_numbers(set_id)
+
+            for vid, frames in sorted(extract_frames.items()):
+                print(vid)
+                num_frames = frames[0]
+                frames_list = frames[1:]
+                vidcap = cv2.VideoCapture(join(set_folder_path, vid + '.mp4'))
+                success, image = vidcap.read()
+                frame_num = 0
+                img_count = 0
+                if not success:
+                    print('Failed to open the video {}'.format(vid))
+                while success:
+                    if frame_num in frames_list:
+                        self.update_progress(img_count / num_frames)
+                        img_count += 1
+                        # Retrieve the image path, bbox, ped_id from the annotation dataframe
+                        print('set_id == "{}" and vid_id == "{}" and image_name == "{}"'.format(set_id, vid, '{:05d}'.format(frame_num)))
+                        df = annotation_dataframe.query('set_id == "{}" and vid_id == "{}" and image_name == "{}"'.format(set_id, vid, '{:05d}'.format(frame_num)))
+                        print(df)
+                        # Apply the function extract_features to each row of the dataframe
+                        df.apply(
+                            lambda row, image=image, set_id=set_id, vid=vid, frame_num=frame_num: 
+                                self._extract_and_save(
+                                    row['img_path'], 
+                                    list(row['bbox']), 
+                                    row['ped_id'], 
+                                    set_id, 
+                                    vid, 
+                                    '{:05d}'.format(frame_num), 
+                                    image, 
+                                    save_path
+                                ), 
+                            axis=1
+                        )
+                    success, image = vidcap.read()
+                    frame_num += 1
+                if num_frames != img_count:
+                    print('num images don\'t match {}/{}'.format(num_frames, img_count))
+                print('\n')
+
 
     # Annotation processing helpers
     def _map_text_to_scalar(self, label_type, value):

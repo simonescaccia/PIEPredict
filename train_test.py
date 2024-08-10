@@ -38,7 +38,8 @@ dim_ordering = K.image_data_format()
 with open('config.yml', 'r') as file:
     config_file = yaml.safe_load(file)
 
-def train_predict(dataset='pie',
+def train_predict(pie_path,
+                  dataset='pie',
                   train_test=2, 
                   intent_model_path='data/pie/intention/context_loc_pretrained'):
     data_opts = {'fstride': 1,
@@ -54,7 +55,6 @@ def train_predict(dataset='pie',
                  'kfold_params': {'num_folds': 5, 'fold': 1}}
 
     t = PIEPredict()
-    pie_path = config_file['PIE_PATH']
 
     if dataset == 'pie':
         imdb = PIE(data_path=pie_path)
@@ -103,7 +103,7 @@ def train_predict(dataset='pie',
 #train models with data up to critical point
 #only for PIE
 #train_test = 0 (train only), 1 (train-test), 2 (test only)
-def train_intent(train_test=1):
+def train_intent(pie_path, train_test=1):
 
     data_opts = {'fstride': 1,
             'sample_type': 'all', 
@@ -129,11 +129,12 @@ def train_intent(train_test=1):
                   lstm_dropout=0.4,
                   lstm_recurrent_dropout=0.2,
                   convlstm_num_filters=64,
-                  convlstm_kernel_size=2)
+                  convlstm_kernel_size=2,
+                  data_path=pie_path)
 
     saved_files_path = ''
 
-    imdb = PIE(data_path=config_file['PIE_PATH'])
+    imdb = PIE(data_path=pie_path)
 
     pretrained_model_path = 'data/pie/intention/context_loc_pretrained'
 
@@ -146,7 +147,7 @@ def train_intent(train_test=1):
 
         saved_files_path = t.train(data_train=beh_seq_train,
                                    data_val=beh_seq_val,
-                                   epochs=10, # TODO: set to 400
+                                   epochs=5, # TODO: set to 400
                                    loss=['binary_crossentropy'],
                                    metrics=['accuracy'],
                                    batch_size=128,
@@ -171,16 +172,17 @@ def train_intent(train_test=1):
         tf.compat.v1.reset_default_graph()
         return saved_files_path
 
-def main(dataset='pie', train_test=2):
+def main(pie_path, dataset='pie', train_test=2):
 
-      intent_model_path = train_intent(train_test=train_test)
-      # train_predict(dataset=dataset, train_test=train_test, intent_model_path=intent_model_path) # no speed and trajectory
+      intent_model_path = train_intent(pie_path=pie_path, train_test=train_test)
+      # train_predict(pie_path=pie_path, dataset=dataset, train_test=train_test, intent_model_path=intent_model_path) # no speed and trajectory
 
 
 if __name__ == '__main__':
+    pie_path = config_file['PIE_PATH']
     try:
         train_test = int(sys.argv[1])
-        main(train_test=train_test)
+        main(pie_path=pie_path, train_test=train_test)
     except ValueError:
         raise ValueError('Usage: python train_test.py <train_test>\n'
                          'train_test: 0 - train only, 1 - train and test, 2 - test only\n')

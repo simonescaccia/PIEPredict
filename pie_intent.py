@@ -56,9 +56,6 @@ from utils import *
 
 K.set_image_data_format('channels_last')
 
-with open('config.yml', 'r') as file:
-    config_file = yaml.safe_load(file)
-
 class PIEIntent(object):
     """
     A convLSTM encoder decoder model for predicting pedestrian intention
@@ -92,7 +89,8 @@ class PIEIntent(object):
                  lstm_dropout=0.4,
                  lstm_recurrent_dropout=0.2,
                  convlstm_num_filters=64,
-                 convlstm_kernel_size=2):
+                 convlstm_kernel_size=2,
+                 data_path=''):
 
         # Network parameters
         self._num_hidden_units = num_hidden_units
@@ -123,6 +121,8 @@ class PIEIntent(object):
 
         self._model_name = 'convlstm_encdec'
 
+        self._pie_path = data_path
+
     def get_path(self,
                  type_save='models', # model or data
                  models_save_folder='',
@@ -130,7 +130,7 @@ class PIEIntent(object):
                  file_name='',
                  data_subset='',
                  data_type='',
-                 save_root_folder=config_file['PIE_PATH'] + '/data/'):
+                 save_root_folder=''):
         """
         A path generator method for saving model and config data. Creates directories
         as needed.
@@ -143,6 +143,8 @@ class PIEIntent(object):
         :param save_root_folder: The root folder for saved data.
         :return: The full path for the save folder
         """
+        if save_root_folder == '':
+            save_root_folder =  os.path.join(self._pie_path, 'data')
         assert(type_save in ['models', 'data'])
         if data_type != '':
             assert(any([d in data_type for d in ['images', 'features']]))
@@ -249,7 +251,6 @@ class PIEIntent(object):
                 img_name = PurePath(imp).parts[-1].split('.')[0]
                 img_save_folder = os.path.join(save_path, set_id, vid_id)
                 img_save_path = os.path.join(img_save_folder, img_name+'_'+p[0]+'.pkl')
-                
                 if os.path.exists(img_save_path) and not regen_pkl:
                     with open(img_save_path, 'rb') as fid:
                         try:
@@ -257,7 +258,9 @@ class PIEIntent(object):
                         except:
                             img_features = pickle.load(fid, encoding='bytes')
                 else:
+                    print(" ")
                     img_data = load_img(imp)
+                    print("type(img_data): ", type(img_data))
                     bbox = jitter_bbox(imp, [b],'enlarge', 2)[0]
                     bbox = squarify(bbox, 1, img_data.size[0])
                     bbox = list(map(int,bbox[0:4]))
