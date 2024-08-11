@@ -558,13 +558,8 @@ class PIE(object):
                 if not os.path.exists(source_set_path):
                     continue
                 dest_set_path = os.path.join(dest_path, set_id)
-                file_names = os.listdir(source_set_path)
-                for file_name in file_names:
-                    # Check if the file exists
-                    if not os.path.exists(os.path.join(dest_set_path, file_name)):
-                        shutil.move(os.path.join(source_set_path, file_name), dest_set_path)
-                       
-            
+                print("Moving", source_set_path, "to", dest_set_path)
+                shutil.move(source_set_path, dest_set_path)   
 
     # Annotation processing helpers
     def _map_text_to_scalar(self, label_type, value):
