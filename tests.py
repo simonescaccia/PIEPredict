@@ -42,12 +42,12 @@ def check_images(config_file):
     image2 = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
     image2 = Image.fromarray(image2)
     
-    # Compare the two images
+    # Compare the two images #TODO compare the input to the vgg16 model
     diff = ImageChops.difference(image1, image2)
     if diff.getbbox():
-        print("images are different")
+        print("Images are different")
     else:
-        print("images are the same")
+        print("Images are the same")
 
     # Delete the temporary folder
     shutil.rmtree(temp_folder_path)
@@ -59,8 +59,8 @@ with open('config.yml', 'r') as file:
 # print("Check if running in virtual environment: ", check_venv())
 # print("Check if GPU is available: ", check_gpu())
 
-# imdb = PIE(data_path=config_file['PIE_PATH'])
-# imdb.extract_images_and_save_features()
-# imdb.organize_features()
+imdb = PIE(data_path=config_file['PIE_PATH'])
+imdb.extract_images_and_save_features()
+imdb.organize_features()
 
-check_images(config_file)
+# check_images(config_file)

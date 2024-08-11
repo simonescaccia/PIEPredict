@@ -452,12 +452,11 @@ class PIE(object):
             image_array = img_to_array(img_data)
             preprocessed_img = vgg16.preprocess_input(image_array)
             expanded_img = np.expand_dims(preprocessed_img, axis=0)
-            img_features = self.context_model.predict(expanded_img)
+            img_features = self.context_model.predict(expanded_img, verbose = 0)
             if not os.path.exists(img_save_folder):
                 os.makedirs(img_save_folder)
             with open(img_save_path, 'wb') as fid:
-                pickle.dump(img_features, fid, pickle.HIGHEST_PROTOCOL)
-        
+                pickle.dump(img_features, fid, pickle.HIGHEST_PROTOCOL)        
 
     def extract_images_and_save_features(self):
         """
