@@ -113,7 +113,7 @@ def bbox_sanity_check(img, bbox):
     return bbox
 
 
-def jitter_bbox(img_path,bbox, mode, ratio):
+def jitter_bbox(image, bbox, mode, ratio, img_path = None):
     '''
     This method jitters the position or dimentions of the bounding box.
     mode: 'same' returns the bounding box unchanged
@@ -131,7 +131,11 @@ def jitter_bbox(img_path,bbox, mode, ratio):
     if mode == 'same':
         return bbox
 
-    img = load_img(img_path)
+    if img_path is not None:
+        img = load_img(img_path)
+    else:
+        img = image
+
     img_width, img_heigth = img.size
 
     if mode in ['random_enlarge', 'enlarge']:

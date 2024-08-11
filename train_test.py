@@ -147,7 +147,7 @@ def train_intent(pie_path, train_test=1):
 
         saved_files_path = t.train(data_train=beh_seq_train,
                                    data_val=beh_seq_val,
-                                   epochs=5, # TODO: set to 400
+                                   epochs=400,
                                    loss=['binary_crossentropy'],
                                    metrics=['accuracy'],
                                    batch_size=128,

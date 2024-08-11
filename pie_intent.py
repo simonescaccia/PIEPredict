@@ -260,7 +260,6 @@ class PIEIntent(object):
                 else:
                     print(" ")
                     img_data = load_img(imp)
-                    print("type(img_data): ", type(img_data))
                     bbox = jitter_bbox(imp, [b],'enlarge', 2)[0]
                     bbox = squarify(bbox, 1, img_data.size[0])
                     bbox = list(map(int,bbox[0:4]))

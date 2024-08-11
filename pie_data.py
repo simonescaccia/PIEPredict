@@ -407,7 +407,7 @@ class PIE(object):
         """
 
         print('---------------------------------------------------------')
-        print("Preparing annotations for the images")
+        print("Preparing annotations for each images")
 
         # Store the annotations in a dataframe wit the following columns: set_id, vid_id, image_name, img_path, bbox, ped_id
         df = pd.DataFrame(columns=['set_id', 'vid_id', 'image_name', 'img_path', 'bbox', 'ped_id'])
@@ -428,7 +428,7 @@ class PIE(object):
         print('')
         return df
     
-    def _extract_and_save(self, img_path, b, ped_id, set_id, vid_id, img_name, image, save_path):
+    def _extract_and_save(self, b, ped_id, set_id, vid_id, img_name, image, save_path):
         """
         @author: Simone Scaccia
         Extracts features from images and saves them on hard drive
@@ -444,7 +444,7 @@ class PIE(object):
         img_save_folder = os.path.join(save_path, set_id, vid_id)
         img_save_path = os.path.join(img_save_folder, img_name+'_'+ped_id+'.pkl')
         if not os.path.exists(img_save_path):
-            bbox = jitter_bbox(img_path, [b],'enlarge', 2)[0]
+            bbox = jitter_bbox(image, [b],'enlarge', 2)[0]
             bbox = squarify(bbox, 1, image.size[0])
             bbox = list(map(int,bbox[0:4]))
             cropped_image = image.crop(bbox)
@@ -516,7 +516,6 @@ class PIE(object):
                         df.apply(
                             lambda row, image=image, set_id=set_id, vid=vid, frame_num=frame_num: 
                                 self._extract_and_save(
-                                    row['img_path'], 
                                     list(row['bbox']), 
                                     row['ped_id'], 
                                     set_id, 
