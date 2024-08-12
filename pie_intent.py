@@ -260,7 +260,7 @@ class PIEIntent(object):
                 else:
                     print(" ")
                     img_data = load_img(imp)
-                    bbox = jitter_bbox(imp, [b],'enlarge', 2)[0]
+                    bbox = jitter_bbox([b],'enlarge', 2, img_path=imp)[0]
                     bbox = squarify(bbox, 1, img_data.size[0])
                     bbox = list(map(int,bbox[0:4]))
                     cropped_image = img_data.crop(bbox)
@@ -725,6 +725,15 @@ class PIEIntent(object):
                                         'ped_id': ped[-1][0],
                                         'res': test_results_chunk[i][0],
                                         'target': test_target_data_chunk[i]})
+
+            if visualize:
+                for item in vis_results:
+                    print("ped_id: ", item['ped_id'])
+                    print("res: ", item['res'])
+                    print("target: ", item['target'])
+                    print("bbox: ", item['bbox'])
+                    print("image: ", item['imp'])
+                    print(" ")
 
 
             acc = accuracy_score(test_target_data, np.round(test_results))

@@ -103,7 +103,7 @@ def train_predict(pie_path,
 #train models with data up to critical point
 #only for PIE
 #train_test = 0 (train only), 1 (train-test), 2 (test only)
-def train_intent(pie_path, train_test=1):
+def train_intent(pie_path, train_test=1, pretrained_model_path=''):
 
     data_opts = {'fstride': 1,
             'sample_type': 'all', 
@@ -136,7 +136,8 @@ def train_intent(pie_path, train_test=1):
 
     imdb = PIE(data_path=pie_path)
 
-    pretrained_model_path = 'data/pie/intention/context_loc_pretrained'
+    if pretrained_model_path == '':
+        pretrained_model_path = 'data/pie/intention/context_loc_pretrained'
 
     if train_test < 2:  # Train
         beh_seq_val = imdb.generate_data_trajectory_sequence('val', **data_opts)
@@ -172,17 +173,18 @@ def train_intent(pie_path, train_test=1):
         tf.compat.v1.reset_default_graph()
         return saved_files_path
 
-def main(pie_path, dataset='pie', train_test=2):
+def main(pie_path, dataset='pie', train_test=2, pretrained_model_path=''):
 
-      intent_model_path = train_intent(pie_path=pie_path, train_test=train_test)
+      intent_model_path = train_intent(pie_path=pie_path, train_test=train_test, pretrained_model_path=pretrained_model_path)
       # train_predict(pie_path=pie_path, dataset=dataset, train_test=train_test, intent_model_path=intent_model_path) # no speed and trajectory
 
 
 if __name__ == '__main__':
     pie_path = config_file['PIE_PATH']
+    pretrained_model_path = config_file['PRETRAINED_MODEL_PATH']
     try:
         train_test = int(sys.argv[1])
-        main(pie_path=pie_path, train_test=train_test)
+        main(pie_path=pie_path, train_test=train_test, pretrained_model_path=pretrained_model_path)
     except ValueError:
         raise ValueError('Usage: python train_test.py <train_test>\n'
                          'train_test: 0 - train only, 1 - train and test, 2 - test only\n')

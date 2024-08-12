@@ -444,7 +444,7 @@ class PIE(object):
         img_save_folder = os.path.join(save_path, set_id, vid_id)
         img_save_path = os.path.join(img_save_folder, img_name+'_'+ped_id+'.pkl')
         if not os.path.exists(img_save_path):
-            bbox = jitter_bbox(image, [b],'enlarge', 2)[0]
+            bbox = jitter_bbox([b],'enlarge', 2, image=image)[0]
             bbox = squarify(bbox, 1, image.size[0])
             bbox = list(map(int,bbox[0:4]))
             cropped_image = image.crop(bbox)
