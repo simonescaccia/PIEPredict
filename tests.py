@@ -4,11 +4,17 @@ import os
 import shutil
 import sys
 import cv2
+import numpy as np
+from prettytable import PrettyTable
 import tensorflow as tf
 from pie_data import PIE
 import yaml
 from keras.utils import load_img
 from PIL import Image, ImageChops
+import pandas as pd
+
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
 
 def check_venv():
     return sys.prefix != sys.base_prefix
@@ -52,6 +58,22 @@ def check_images(config_file):
     # Delete the temporary folder
     shutil.rmtree(temp_folder_path)
 
+def print_intent_results(path):
+    path = os.path.join(path, 'ped_intents.pkl')
+    obj = pd.read_pickle(path)
+
+    acc = accuracy_score(obj['gt'], np.round(obj['results']))
+    f1 = f1_score(obj['gt'], np.round(obj['results']))
+
+    t = PrettyTable(['Acc', 'F1'])
+    t.title = 'Intention model'
+    t.add_row([acc, f1])
+    print(t)
+
+def print_history(path):
+    path = os.path.join(path, 'history.pkl')
+    obj = pd.read_pickle(path)
+    print(obj)
 
 with open('config.yml', 'r') as file:
     config_file = yaml.safe_load(file)
@@ -59,8 +81,11 @@ with open('config.yml', 'r') as file:
 # print("Check if running in virtual environment: ", check_venv())
 # print("Check if GPU is available: ", check_gpu())
 
-imdb = PIE(data_path=config_file['PIE_PATH'])
-imdb.extract_images_and_save_features()
-imdb.organize_features()
+# imdb = PIE(data_path=config_file['PIE_PATH'])
+# imdb.extract_images_and_save_features()
+# imdb.organize_features()
 
 # check_images(config_file)
+
+print_intent_results(config_file['PRETRAINED_MODEL_PATH'])
+print_history(config_file['PRETRAINED_MODEL_PATH'])
