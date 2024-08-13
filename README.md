@@ -49,6 +49,12 @@ To install via virtual environment (recommended) follow these steps:
 Install dependencies:
 `pip3 install -r requirements.txt`
 
+`config.yml` contains:
+```yaml
+PIE_PATH: 'path\to\PIE_dataset'
+PIE_RAW_PATH: 'path\to\PIE_clips'
+PRETRAINED_MODEL_PATH: 'path\to\pretrained\model'
+```
 
 <a name="datasets"></a>
 ## PIE Dataset

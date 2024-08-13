@@ -396,7 +396,7 @@ class PIE(object):
         bboxes = bb
         return d, images, bboxes, ped_ids
 
-    def _get_image_annotations(self, images, bboxes, ped_ids):
+    def _get_ped_info_per_image(self, images, bboxes, ped_ids):
         """
         @author: Simone Scaccia
         Collects annotations for each image
@@ -464,23 +464,19 @@ class PIE(object):
         Extracts annotated images from clips, compute features and saves on hard drive
         :param extract_frame_type: Whether to extract 'all' frames or only the ones that are 'annotated'
                              Note: extracting 'all' features requires approx. TODO
-        """
-        # Get annotations
-        data_type = {'encoder_input_type': self.data_opts['encoder_input_type'],
-                     'decoder_input_type': self.data_opts['decoder_input_type'],
-                     'output_type': self.data_opts['output_type']}
-        seq_length = self.data_opts['max_size_observe']
-        
+        """        
 
         annot_database = self.generate_database()
         sequence_data = self._get_intention('all', annot_database, **self.data_opts)
-        _, images, bboxes, ped_ids = self.get_tracks(sequence_data, data_type, seq_length, self.data_opts['seq_overlap_rate'])
+        images = sequence_data['image']
+        bboxes = sequence_data['bbox']
+        ped_ids = sequence_data['ped_id']
         save_path=self.get_path(type_save='data',
                                 data_type='features'+'_'+self.data_opts['crop_type']+'_'+self.data_opts['crop_mode'], # images    
                                 model_name='vgg16_'+'none',
                                 data_subset = 'all')
 
-        annotation_dataframe = self._get_image_annotations(images, bboxes, ped_ids)
+        ped_dataframe = self._get_ped_info_per_image(images, bboxes, ped_ids)
         
         print('---------------------------------------------------------')
         print("Extracting features and saving on hard drive")
@@ -510,7 +506,7 @@ class PIE(object):
                         image = cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
                         image = Image.fromarray(image)
                         # Retrieve the image path, bbox, ped_id from the annotation dataframe
-                        df = annotation_dataframe.query('set_id == "{}" and vid_id == "{}" and image_name == "{}"'.format(set_id, vid, '{:05d}'.format(frame_num)))
+                        df = ped_dataframe.query('set_id == "{}" and vid_id == "{}" and image_name == "{}"'.format(set_id, vid, '{:05d}'.format(frame_num)))
                         # Apply the function extract_features to each row of the dataframe
                         df.apply(
                             lambda row, image=image, set_id=set_id, vid=vid, frame_num=frame_num: 

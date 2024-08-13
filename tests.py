@@ -70,10 +70,43 @@ def print_intent_results(path):
     t.add_row([acc, f1])
     print(t)
 
-def print_history(path):
-    path = os.path.join(path, 'history.pkl')
+def print_pikle(path):
     obj = pd.read_pickle(path)
     print(obj)
+
+def update_dict():
+    data_opts = {'fstride': 1,
+                'sample_type': 'all', 
+                'height_rng': [0, float('inf')],
+                'squarify_ratio': 0,
+                'data_split_type': 'default',  #  kfold, random, default
+                'seq_type': 'intention', #  crossing , intention
+                'min_track_size': 0, #  discard tracks that are shorter
+                'max_size_observe': 15,  # number of observation frames
+                'max_size_predict': 5,  # number of prediction frames
+                'seq_overlap_rate': 0.5,  # how much consecutive sequences overlap
+                'balance': True,  # balance the training and testing samples
+                'crop_type': 'context',  # crop 2x size of bbox around the pedestrian
+                'crop_mode': 'pad_resize',  # pad with 0s and resize to VGG input
+                'encoder_input_type': [],
+                'decoder_input_type': ['bbox'],
+                'output_type': ['intention_binary']
+                }
+
+    params = {'fstride': 1,
+            'sample_type': 'all',  # 'beh'
+            'height_rng': [0, float('inf')],
+            'squarify_ratio': 0,
+            'data_split_type': 'default',  # kfold, random, default
+            'seq_type': 'intention',
+            'min_track_size': 15,
+            'random_params': {'ratios': None,
+                            'val_data': True,
+                            'regen_data': False},
+            'kfold_params': {'num_folds': 5, 'fold': 1}}
+    
+    params.update(data_opts)
+    print(params)
 
 with open('config.yml', 'r') as file:
     config_file = yaml.safe_load(file)
@@ -81,11 +114,13 @@ with open('config.yml', 'r') as file:
 # print("Check if running in virtual environment: ", check_venv())
 # print("Check if GPU is available: ", check_gpu())
 
-# imdb = PIE(data_path=config_file['PIE_PATH'])
-# imdb.extract_images_and_save_features()
-# imdb.organize_features()
+imdb = PIE(data_path=config_file['PIE_PATH'])
+imdb.extract_images_and_save_features()
+#imdb.organize_features()
 
 # check_images(config_file)
 
-print_intent_results(config_file['PRETRAINED_MODEL_PATH'])
-print_history(config_file['PRETRAINED_MODEL_PATH'])
+#print_intent_results(config_file['PRETRAINED_MODEL_PATH'])
+#print_pikle(os.path.join(config_file['PRETRAINED_MODEL_PATH'], 'history.pkl'))
+
+#update_dict()
