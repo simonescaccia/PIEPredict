@@ -20,7 +20,7 @@ limitations under the License.
 
 import numpy as np
 import os
-import pickle
+import pickle5
 import time
 
 from keras import backend as K
@@ -247,9 +247,9 @@ class PIEIntent(object):
                 if os.path.exists(img_save_path) and not regen_pkl:
                     with open(img_save_path, 'rb') as fid:
                         try:
-                            img_features = pickle.load(fid)
+                            img_features = pickle5.load(fid)
                         except:
-                            img_features = pickle.load(fid, encoding='bytes')
+                            img_features = pickle5.load(fid, encoding='bytes')
                 else:
                     img_data = load_img(imp)
                     bbox = jitter_bbox(imp, [b],'enlarge', 2)[0]
@@ -264,7 +264,7 @@ class PIEIntent(object):
                     if not os.path.exists(img_save_folder):
                         os.makedirs(img_save_folder)
                     with open(img_save_path, 'wb') as fid:
-                        pickle.dump(img_features, fid, pickle.HIGHEST_PROTOCOL)
+                        pickle5.dump(img_features, fid, pickle5.HIGHEST_PROTOCOL)
                 img_features = np.squeeze(img_features)
                 img_seq.append(img_features)
             sequences.append(img_seq)
@@ -587,9 +587,9 @@ class PIEIntent(object):
 
         #Save config and training param files
         with open(config_path+'.pkl', 'wb') as fid:
-            pickle.dump([self.get_model_config(),
+            pickle5.dump([self.get_model_config(),
                         train_config, data_opts],
-                        fid, pickle.HIGHEST_PROTOCOL)
+                        fid, pickle5.HIGHEST_PROTOCOL)
         print('Wrote configs to {}'.format(config_path))
 
         #Save config and training param files
@@ -633,7 +633,7 @@ class PIEIntent(object):
                                                        save_root_folder='data')
 
         with open(history_path, 'wb') as fid:
-            pickle.dump(history.history, fid, pickle.HIGHEST_PROTOCOL)
+            pickle5.dump(history.history, fid, pickle5.HIGHEST_PROTOCOL)
         print('Wrote configs to {}'.format(config_path))
 
         del train_data, val_data  # clear memory
@@ -649,9 +649,9 @@ class PIEIntent(object):
                    visualize=False):
             with open(os.path.join(model_path, 'configs.pkl'), 'rb') as fid:
                 try:
-                    configs = pickle.load(fid)
+                    configs = pickle5.load(fid)
                 except:
-                    configs = pickle.load(fid, encoding='bytes')
+                    configs = pickle5.load(fid, encoding='bytes')
             train_params = configs[1]
             self.load_model_config(configs[0])
                 # Create context model
@@ -729,5 +729,5 @@ class PIEIntent(object):
                            'results': test_results,
                            'gt': test_target_data}
                 with open(save_results_path, 'wb') as fid:
-                    pickle.dump(results, fid, pickle.HIGHEST_PROTOCOL)
+                    pickle5.dump(results, fid, pickle5.HIGHEST_PROTOCOL)
             return acc, f1

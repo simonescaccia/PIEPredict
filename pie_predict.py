@@ -19,7 +19,7 @@ limitations under the License.
 """
 import os
 import time
-import pickle
+import pickle5
 import numpy as np
 
 from keras.layers import Input, RepeatVector, Dense, Permute
@@ -335,8 +335,8 @@ class PIEPredict(object):
 
 
         with open(opts_path, 'wb') as fid:
-            pickle.dump(train_data['model_opts'], fid,
-                        pickle.HIGHEST_PROTOCOL)
+            pickle5.dump(train_data['model_opts'], fid,
+                        pickle5.HIGHEST_PROTOCOL)
 
         # save training and model parameters
         config_path, _ = self.get_path(save_folder=model_folder_name,
@@ -391,7 +391,7 @@ class PIEPredict(object):
                                                        file_name='history.pkl')
 
         with open(history_path, 'wb') as fid:
-            pickle.dump(history.history, fid, pickle.HIGHEST_PROTOCOL)
+            pickle5.dump(history.history, fid, pickle5.HIGHEST_PROTOCOL)
 
         return saved_files_path
 
@@ -407,9 +407,9 @@ class PIEPredict(object):
 
         with open(os.path.join(model_path, 'model_opts.pkl'), 'rb') as fid:
             try:
-                model_opts = pickle.load(fid)
+                model_opts = pickle5.load(fid)
             except:
-                model_opts = pickle.load(fid, encoding='bytes')
+                model_opts = pickle5.load(fid, encoding='bytes')
 
         test_data = self.get_data(data_test, **model_opts)
         test_obs_data = [test_data['enc_input'], test_data['dec_input']]
@@ -478,7 +478,7 @@ class PIEPredict(object):
                            'performance': perf}
 
             with open(save_results_path, 'wb') as fid:
-                pickle.dump(results, fid, pickle.HIGHEST_PROTOCOL)
+                pickle5.dump(results, fid, pickle5.HIGHEST_PROTOCOL)
 
         return perf
 
@@ -487,9 +487,9 @@ class PIEPredict(object):
         intent_path = os.path.join(intent_model_path, 'ped_intents.pkl')
         with open(intent_path, 'rb') as fid:
             try:
-                intent = pickle.load(fid)
+                intent = pickle5.load(fid)
             except:
-                intent = pickle.load(fid, encoding='bytes')
+                intent = pickle5.load(fid, encoding='bytes')
 
         model_opts = {'normalize_bbox': True,
                        'track_overlap': 0.5,  # 0.8 for jaad, 0.5 pie
@@ -626,7 +626,7 @@ class PIEPredict(object):
                            'gt': box_data['pred_target'],
                            'performance': perf}
             with open(save_results_path, 'wb') as fid:
-                pickle.dump(results, fid, pickle.HIGHEST_PROTOCOL)
+                pickle5.dump(results, fid, pickle5.HIGHEST_PROTOCOL)
         return perf  # performance
 
     def pie_encdec(self):
