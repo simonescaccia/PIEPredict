@@ -114,10 +114,6 @@ with open('config.yml', 'r') as file:
 # print("Check if running in virtual environment: ", check_venv())
 # print("Check if GPU is available: ", check_gpu())
 
-imdb = PIE(data_path=config_file['PIE_PATH'])
-imdb.extract_images_and_save_features()
-#imdb.organize_features()
-
 # check_images(config_file)
 
 #print_intent_results(config_file['PRETRAINED_MODEL_PATH'])
