@@ -644,6 +644,23 @@ class PIEIntent(object):
             pickle.dump(history.history, fid, pickle.HIGHEST_PROTOCOL)
         print('Wrote configs to {}'.format(config_path))
 
+        loss_graph_path, _ = self.get_path(type_save='models',
+                                        model_name='convlstm_encdec',
+                                        models_save_folder=model_folder_name,
+                                        file_name='loss_graph.png',
+                                        save_root_folder='data')
+        accuracy_graph_path, _ = self.get_path(type_save='models',
+                                            model_name='convlstm_encdec',
+                                            models_save_folder=model_folder_name,
+                                            file_name='accuracy_graph.png',
+                                            save_root_folder='data')
+        lr_graph_path, _ = self.get_path(type_save='models',
+                                        model_name='convlstm_encdec',
+                                        models_save_folder=model_folder_name,
+                                        file_name='lr_graph.png',
+                                        save_root_folder='data')
+        save_graphs(history_path, loss_graph_path, accuracy_graph_path, lr_graph_path)
+
         del train_data, val_data  # clear memory
         del train_d, val_d
         

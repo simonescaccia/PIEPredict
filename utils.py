@@ -20,6 +20,8 @@ limitations under the License.
 import sys
 import PIL
 from keras.utils import img_to_array, load_img
+from matplotlib import pyplot as plt
+import pandas as pd
 
 
 def update_progress(progress):
@@ -32,6 +34,41 @@ def update_progress(progress):
     text = "\r[{}] {:0.2f}% {}".format( "#"*block + "-"*(barLength-block), progress*100, status)
     sys.stdout.write(text)
     sys.stdout.flush()
+
+def save_graphs(history_path, loss_graph_path, accuracy_graph_path, lr_graph_path):
+    print('---------------------------------------------------------')
+    print("Saving the loss and accuracy graphs")
+    obj = pd.read_pickle(history_path)
+    loss = obj['loss']
+    val_loss = obj['val_loss']
+    acc = obj["accuracy"]
+    val_acc = obj["val_accuracy"]
+    lr = obj['lr']
+    # save the losses plot
+    plt.plot(loss)
+    plt.plot(val_loss)
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.savefig(loss_graph_path)
+    plt.clf()
+    # save the accuracy plot
+    plt.plot(acc)
+    plt.plot(val_acc)
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.savefig(accuracy_graph_path)
+    plt.clf()
+    # save the learning rate plot
+    plt.plot(lr)
+    plt.title('learning rate')
+    plt.ylabel('lr')
+    plt.xlabel('epoch')
+    plt.savefig(lr_graph_path)
+    plt.clf()
 
 
 ######### DATA UTILITIES ##############
