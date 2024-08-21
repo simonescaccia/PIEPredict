@@ -112,7 +112,10 @@ with open('config.yml', 'r') as file:
     config_file = yaml.safe_load(file)
 
 # print("Check if running in virtual environment: ", check_venv())
-# print("Check if GPU is available: ", check_gpu())
+print("Check if GPU is available: ", check_gpu())
+
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
 
 # check_images(config_file)
 

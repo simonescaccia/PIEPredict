@@ -37,7 +37,7 @@ To install via virtual environment (recommended) follow these steps:
     - Create a virtual environment with Python3:
 
       ```
-      > virtualenv --system-site-packages -p python3 ./venv
+      > virtualenv --system-site-packages -p python3.10 ./venv
       > source venv/bin/activate
       ```
 
