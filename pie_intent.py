@@ -573,7 +573,7 @@ class PIEIntent(object):
         val_data = ([val_img, val_d['decoder_input']], val_d['output'])
 
         optimizer = RMSprop(learning_rate=optimizer_params['lr'],
-                            decay=optimizer_params['decay'],
+                            weight_decay=optimizer_params['decay'],
                             clipvalue=optimizer_params['clipvalue'])
 
         train_model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
