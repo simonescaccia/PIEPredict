@@ -54,6 +54,7 @@ Install dependencies:
 PIE_PATH: 'path\to\PIE_dataset'
 PIE_RAW_PATH: 'path\to\PIE_clips'
 PRETRAINED_MODEL_PATH: 'path\to\pretrained\model'
+IS_GPU: False or True
 ```
 
 <a name="datasets"></a>

@@ -28,7 +28,7 @@ from pie_predict import PIEPredict
 
 from pie_data import PIE
 
-import keras.backend as K
+from tensorflow.python.keras import backend as K
 import tensorflow as tf
 
 from prettytable import PrettyTable
@@ -37,6 +37,9 @@ dim_ordering = K.image_data_format()
 
 with open('config.yml', 'r') as file:
     config_file = yaml.safe_load(file)
+
+if not config_file['IS_GPU']:
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 def train_predict(pie_path,
                   dataset='pie',
