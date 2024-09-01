@@ -283,7 +283,7 @@ class PIEIntent(object):
         """
         Generate tracks by sampling from pedestrian sequences
         :param dataset: raw data from the dataset
-        :param data_type: types of data for encoder/decoder input
+        :param data_type: types of data for encoder/decoder input  # data_type:  {'encoder_input_type': [], 'decoder_input_type': ['bbox'], 'output_type': ['intention_binary']}
         :param seq_length: the length of the sequence
         :param overlap: defines the overlap between consecutive sequences (between 0 and 1)
         :return: a dictionary containing sampled tracks for each data modality
@@ -293,7 +293,7 @@ class PIEIntent(object):
 
         overlap_stride = 1 if overlap_stride < 1 else overlap_stride
 
-        d_types = []
+        d_types = []    # d_types:  ['bbox', 'intention_binary']
         for k in data_type.keys():
             d_types.extend(data_type[k])
         d = {}
