@@ -10,5 +10,5 @@ pie_path = config_file['PIE_PATH']
 os.chdir(pie_path)
 
 imdb = PIE(data_path=pie_path)
-imdb.extract_and_save_images(extract_frame_type='annotated')
+imdb.extract_images_and_save_features()
 imdb.organize_features()
