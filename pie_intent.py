@@ -22,6 +22,7 @@ import numpy as np
 import os
 import pickle
 import time
+import tensorflow as tf
 
 import yaml
 
@@ -258,6 +259,7 @@ class PIEIntent(object):
                         except:
                             img_features = pickle.load(fid, encoding='bytes')
                 else:
+                    print('img_save_path', img_save_path)
                     print(" ")
                     img_data = load_img(imp)
                     bbox = jitter_bbox([b],'enlarge', 2, img_path=imp)[0]
@@ -470,6 +472,8 @@ class PIEIntent(object):
         decoder_input = Input(shape=(self._decoder_seq_length,
                                      self._decoder_input_size),
                               name='decoder_input')
+        tf.print(decoder_input)
+
         encoder_vec = RepeatVector(self._decoder_seq_length)(encoder_output)
         decoder_concat_inputs = Concatenate(axis=2)([encoder_vec, decoder_input])
 

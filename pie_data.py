@@ -52,7 +52,7 @@ from PIL import Image
 import shutil
 
 class PIE(object):
-    def __init__(self, regen_database=False, data_path=''):
+    def __init__(self, regen_database=False, data_path='', pie_raw_path=''):
         """
         Class constructor
         :param regen_database: Whether generate the database or not
@@ -72,7 +72,7 @@ class PIE(object):
         self._annotation_attributes_path = join(self._pie_path, 'annotations_attributes')
         self._annotation_vehicle_path = join(self._pie_path, 'annotations_vehicle')
 
-        self._clips_path = join(self._pie_path, 'PIE_clips')
+        self._clips_path = pie_raw_path
         self._images_path = join(self._pie_path, 'images')
 
         # Create context model
