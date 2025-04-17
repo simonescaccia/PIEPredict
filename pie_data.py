@@ -29,6 +29,7 @@ SOFTWARE.
 """
 from pathlib import PurePath
 import pickle
+import concurrent
 import cv2
 import sys
 
@@ -261,7 +262,10 @@ class PIE(object):
                              Note: extracting 'all' frames requires approx. 3TB space whereas
                                    'annotated' requires approx. 1TB
         """
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=16)
+
         set_folders = [f for f in sorted(listdir(self._clips_path))]
+        set_folders = [f for f in set_folders if f != 'set06' and f != 'set05'] # TODO: remove this line
         for set_id in set_folders:
             print('Extracting frames from', set_id)
             set_folder_path = join(self._clips_path, set_id)
@@ -272,29 +276,36 @@ class PIE(object):
 
             set_images_path = join(self._pie_path, "images", set_id)
             for vid, frames in sorted(extract_frames.items()):
-                print(vid)
-                video_images_path = join(set_images_path, vid)
-                num_frames = frames[0]
-                frames_list = frames[1:]
-                if not isdir(video_images_path):
-                    makedirs(video_images_path)
-                vidcap = cv2.VideoCapture(join(set_folder_path, vid + '.mp4'))
-                success, image = vidcap.read()
-                frame_num = 0
-                img_count = 0
-                if not success:
-                    print('Failed to open the video {}'.format(vid))
-                while success:
-                    if frame_num in frames_list:
-                        self.update_progress(img_count / num_frames)
-                        img_count += 1
-                        if not isfile(join(video_images_path, "%05.f.png") % frame_num):
-                            cv2.imwrite(join(video_images_path, "%05.f.png") % frame_num, image)
-                    success, image = vidcap.read()
-                    frame_num += 1
-                if num_frames != img_count:
-                    print('num images don\'t match {}/{}'.format(num_frames, img_count))
-                print('\n')
+                # Start a new thread for each video
+                pool.submit(self.videos_to_images, set_images_path, set_folder_path, vid, frames)
+
+        pool.shutdown(wait=True)
+
+
+    def videos_to_images(self, set_images_path, set_folder_path, vid, frames):
+        print(vid)
+        video_images_path = join(set_images_path, vid)
+        num_frames = frames[0]
+        frames_list = frames[1:]
+        if not isdir(video_images_path):
+            makedirs(video_images_path)
+        vidcap = cv2.VideoCapture(join(set_folder_path, vid + '.mp4'))
+        success, image = vidcap.read()
+        frame_num = 0
+        img_count = 0
+        if not success:
+            print('Failed to open the video {}'.format(vid))
+        while success:
+            if frame_num in frames_list:
+                self.update_progress(img_count / num_frames)
+                img_count += 1
+                if not isfile(join(video_images_path, "%05.f.png") % frame_num):
+                    cv2.imwrite(join(video_images_path, "%05.f.png") % frame_num, image)
+            success, image = vidcap.read()
+            frame_num += 1
+        if num_frames != img_count:
+            print('num images don\'t match {}/{}'.format(num_frames, img_count))
+        print('\n')
 
     def get_path(self,
                  type_save='models', # model or data
