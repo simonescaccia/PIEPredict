@@ -164,8 +164,21 @@ def train_intent(pie_path, train_test=1, pretrained_model_path=''):
         if saved_files_path == '':
             saved_files_path = pretrained_model_path
         beh_seq_test = imdb.generate_data_trajectory_sequence('test', **data_opts)
+
+        path = 'data/ped_images.txt'
+        # Delete the file if it exists
+        if os.path.exists(path):
+            # Delete the file
+            os.remove(path)
+        # Save images for each ped_id from TP, TN, FP, FN ids
+        for idx in range(len(beh_seq_test['ped_id'])):
+            ped_id = beh_seq_test['ped_id'][idx]
+            img_seq = beh_seq_test['image'][idx]
+            with open(path, 'a') as f:
+                for img in img_seq:
+                    f.write(f"{idx} {ped_id[0][0]} {img} \n")
+
         acc, f1 = t.test_chunk(beh_seq_test, data_opts, saved_files_path, False)
-        
         t = PrettyTable(['Acc', 'F1'])
         t.title = 'Intention model (local_context + bbox)'
         t.add_row([acc, f1])
@@ -187,6 +200,8 @@ if __name__ == '__main__':
     pretrained_model_path = config_file['PRETRAINED_MODEL_PATH']
     try:
         train_test = int(sys.argv[1])
+        if train_test == 2:
+            pretrained_model_path = ''
         main(pie_path=pie_path, train_test=train_test, pretrained_model_path=pretrained_model_path)
     except ValueError:
         raise ValueError('Usage: python train_test.py <train_test>\n'

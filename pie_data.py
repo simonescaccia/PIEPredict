@@ -262,10 +262,10 @@ class PIE(object):
                              Note: extracting 'all' frames requires approx. 3TB space whereas
                                    'annotated' requires approx. 1TB
         """
-        pool = concurrent.futures.ThreadPoolExecutor(max_workers=16)
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
         set_folders = [f for f in sorted(listdir(self._clips_path))]
-        set_folders = [f for f in set_folders if f != 'set06' and f != 'set05'] # TODO: remove this line
+        set_folders = [f for f in set_folders if f == 'set04'] # TODO: remove this line
         for set_id in set_folders:
             print('Extracting frames from', set_id)
             set_folder_path = join(self._clips_path, set_id)
@@ -276,6 +276,8 @@ class PIE(object):
 
             set_images_path = join(self._pie_path, "images", set_id)
             for vid, frames in sorted(extract_frames.items()):
+                if vid != "video_0010": # TODO: remove this line
+                    pass
                 # Start a new thread for each video
                 pool.submit(self.videos_to_images, set_images_path, set_folder_path, vid, frames)
 

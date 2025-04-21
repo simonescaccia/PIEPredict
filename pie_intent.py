@@ -589,7 +589,7 @@ class PIEIntent(object):
         model_path, _ = self.get_path(type_save='models',
                                       model_name='convlstm_encdec',
                                       models_save_folder=model_folder_name,
-                                      file_name='model.h5.keras',
+                                      file_name='model.h5',
                                       save_root_folder='data')
         config_path, _ = self.get_path(type_save='models',
                                        model_name='convlstm_encdec',
@@ -688,11 +688,11 @@ class PIEIntent(object):
                                              include_top=False,
                                              weights='imagenet')
             try:
-                test_model = load_model(os.path.join(model_path, 'model.h5.keras'))
+                test_model = load_model(os.path.join(model_path, 'model.h5'))
 
             except:
                 test_model = self.get_model(train_params['model'])
-                test_model.load_weights(os.path.join(model_path, 'model.h5.keras'))
+                test_model.load_weights(os.path.join(model_path, 'model.h5'))
             
             test_model.summary()
 
@@ -727,7 +727,6 @@ class PIEIntent(object):
                                                                                            self._sequence_length,
                                                                                            overlap)
 
-
                 test_results_chunk = test_model.predict(test_data_chunk,
                                                         batch_size=train_params['batch_size'],
                                                         verbose=1)
@@ -738,6 +737,13 @@ class PIEIntent(object):
                 ped_ids.extend(ped_ids_chunk)
                 bboxes.extend(bboxes_chunk)
                 
+                print("test_target_data_chunk shape: ", np.array(test_target_data_chunk).shape)
+                print("test_results_chunk shape: ", np.array(test_results_chunk).shape)
+                print("ped_ids_chunk shape: ", np.array(ped_ids_chunk).shape)
+
+                self._print_tp_tn_fn_fp(test_target_data_chunk, np.round(test_results_chunk), ped_ids_chunk)
+                sys.exit(0)
+
                 i = -1
                 for imp, box, ped in zip(images_chunk, bboxes_chunk, ped_ids_chunk):
                     i+=1
@@ -769,3 +775,30 @@ class PIEIntent(object):
                 with open(save_results_path, 'wb') as fid:
                     pickle.dump(results, fid, pickle.HIGHEST_PROTOCOL)
             return acc, f1
+    
+    def _print_tp_tn_fn_fp(self, y, curr_pred, i):
+        path = 'data/tp_tn_fn_fp.txt'
+        # Delete the file if it exists
+        if os.path.exists(path):
+            # Delete the file
+            os.remove(path)
+
+        # print i of TP, TN, FP, FN
+        TP, TN, FP, FN = [], [], [], []
+        for idx in range(len(curr_pred)):
+            if curr_pred[idx] == y[idx]:
+                if y[idx] == 1:
+                    TP.append(i[idx][0][0])
+                else:
+                    TN.append(i[idx][0][0])
+            else:
+                if y[idx] == 1:
+                    FN.append(i[idx][0][0])
+                else:
+                    FP.append(i[idx][0][0])
+        # Write to self.path
+        with open(path, 'a') as f:
+            f.write(f'TP: {TP}\n')
+            f.write(f'TN: {TN}\n')
+            f.write(f'FP: {FP}\n')
+            f.write(f'FN: {FN}\n')
